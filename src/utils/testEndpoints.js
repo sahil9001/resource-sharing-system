@@ -40,7 +40,7 @@ async function testEndpoints() {
 
     // Test 6: Get user resources (user1 - Alice)
     console.log('\n6. Testing user resources for user1...');
-    const userResourcesResponse = await axios.get(`${BASE_URL}/user/user1/resources`);
+    const userResourcesResponse = await axios.get(`${BASE_URL}/resource/user/user1/resources`);
     console.log('✅ User resources:', {
       userId: userResourcesResponse.data.userId,
       totalResources: userResourcesResponse.data.totalResources
@@ -57,12 +57,12 @@ async function testEndpoints() {
 
     // Test 8: Get resources with user count (reporting)
     console.log('\n8. Testing resources with user count...');
-    const resourcesWithCountResponse = await axios.get(`${BASE_URL}/resources/with-user-count`);
+    const resourcesWithCountResponse = await axios.get(`${BASE_URL}/resource/resources/with-user-count`);
     console.log('✅ Resources with user count:', resourcesWithCountResponse.data.length, 'resources');
 
     // Test 9: Get users with resource count (reporting)
     console.log('\n9. Testing users with resource count...');
-    const usersWithCountResponse = await axios.get(`${BASE_URL}/users/with-resource-count`);
+    const usersWithCountResponse = await axios.get(`${BASE_URL}/resource/users/with-resource-count`);
     console.log('✅ Users with resource count:', usersWithCountResponse.data.length, 'users');
 
     // Test 10: Test sharing a resource

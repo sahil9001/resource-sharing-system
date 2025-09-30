@@ -1,10 +1,10 @@
+require('dotenv').config();
 const AWS = require('aws-sdk');
 const { Entity } = require('electrodb');
 
 // Initialize DynamoDB client
 const client = new AWS.DynamoDB.DocumentClient({
   region: process.env.AWS_REGION || 'us-east-1',
-  endpoint: process.env.DYNAMODB_ENDPOINT, // For local development
 });
 
 // Users Entity

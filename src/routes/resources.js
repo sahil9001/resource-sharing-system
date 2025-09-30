@@ -167,6 +167,7 @@ router.get('/:id/access-list', async (req, res) => {
 router.get('/user/:id/resources', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('here');
     const userResources = await accessService.getUserResources(id);
     res.json(userResources);
   } catch (error) {

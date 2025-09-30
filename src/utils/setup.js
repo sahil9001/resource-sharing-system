@@ -6,6 +6,7 @@ const { User, Group, UserGroup, Resource, ResourceSharing } = require('../models
 async function setupSampleData() {
   try {
     console.log('Setting up sample data...');
+    require('dotenv').config();
 
     // Create sample users
     const users = [
@@ -22,6 +23,7 @@ async function setupSampleData() {
         await User.create(userData).go();
         console.log(`Created user: ${userData.name}`);
       } catch (error) {
+        console.log(error);
         console.log(`User ${userData.userId} might already exist`);
       }
     }
