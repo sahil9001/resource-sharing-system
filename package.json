@@ -1,0 +1,46 @@
+{
+  "name": "resource-sharing-system",
+  "version": "1.0.0",
+  "description": "A resource sharing system with access control for users, groups, and global sharing",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "deploy": "serverless deploy",
+    "offline": "serverless offline",
+    "test": "jest",
+    "swagger": "swagger-jsdoc -d swaggerDef.js src/routes/*.js -o swagger.json",
+    "setup": "node scripts/setup.js setup",
+    "cleanup": "node scripts/setup.js cleanup",
+    "test:api": "node scripts/test.js all",
+    "test:endpoints": "node scripts/test.js endpoints",
+    "test:access": "node scripts/test.js access"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "serverless-http": "^3.2.0",
+    "aws-sdk": "^2.1490.0",
+    "electrodb": "^2.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.0"
+  },
+  "keywords": [
+    "resource-sharing",
+    "access-control",
+    "dynamodb",
+    "serverless",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT"
+}
