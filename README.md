@@ -2,6 +2,10 @@
 
 A comprehensive resource sharing system with access control that allows resources to be shared with individual users, groups of users, or everyone in the system. Built with Express.js, Serverless Framework, DynamoDB, and ElectroDB.
 
+## Database Schema
+
+https://dbdiagram.io/d/68fe5edf357668b732ac9962
+
 ## Features
 
 - **User Management**: Create, read, update, and delete users
