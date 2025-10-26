@@ -11,6 +11,7 @@
     "test": "jest",
     "swagger": "swagger-jsdoc -d swaggerDef.js src/routes/*.js -o swagger.json",
     "setup": "node scripts/setup.js setup",
+    "setup:tables": "node scripts/setup.js tables",
     "cleanup": "node scripts/setup.js cleanup",
     "test:api": "node scripts/test.js all",
     "test:endpoints": "node scripts/test.js endpoints",

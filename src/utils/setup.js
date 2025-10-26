@@ -1,4 +1,182 @@
-const { User, Group, UserGroup, Resource, ResourceSharing } = require('../models');
+const { User, Group, UserGroup, Resource, ResourceSharing, client } = require('../models');
+const AWS = require('aws-sdk');
+
+// Initialize DynamoDB client for table operations
+const dynamodb = new AWS.DynamoDB({
+  region: process.env.AWS_REGION || 'us-east-1',
+  // endpoint: process.env.DYNAMODB_ENDPOINT,
+});
+
+/**
+ * Check if a DynamoDB table exists
+ */
+async function tableExists(tableName) {
+  try {
+    await dynamodb.describeTable({ TableName: tableName }).promise();
+    return true;
+  } catch (error) {
+    if (error.code === 'ResourceNotFoundException') {
+      return false;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Create a DynamoDB table
+ */
+async function createTable(tableName, keySchema, attributeDefinitions, globalSecondaryIndexes = []) {
+  const params = {
+    TableName: tableName,
+    BillingMode: 'PAY_PER_REQUEST',
+    AttributeDefinitions: attributeDefinitions,
+    KeySchema: keySchema,
+  };
+
+  if (globalSecondaryIndexes.length > 0) {
+    params.GlobalSecondaryIndexes = globalSecondaryIndexes;
+  }
+
+  try {
+    await dynamodb.createTable(params).promise();
+    console.log(`✅ Created table: ${tableName}`);
+    
+    // Wait for table to be active
+    console.log(`⏳ Waiting for table ${tableName} to be active...`);
+    await dynamodb.waitFor('tableExists', { TableName: tableName }).promise();
+    console.log(`✅ Table ${tableName} is now active`);
+  } catch (error) {
+    if (error.code === 'ResourceInUseException') {
+      console.log(`ℹ️  Table ${tableName} already exists`);
+    } else {
+      throw error;
+    }
+  }
+}
+
+/**
+ * Ensure all required tables exist
+ */
+async function ensureTablesExist() {
+  console.log('🔍 Checking if DynamoDB tables exist...');
+  
+  const tablePrefix = process.env.DYNAMODB_TABLE_PREFIX || 'resource-sharing-system-dev';
+  
+  const tables = [
+    {
+      name: `${tablePrefix}-users`,
+      keySchema: [
+        { AttributeName: 'pk', KeyType: 'HASH' },
+        { AttributeName: 'sk', KeyType: 'RANGE' }
+      ],
+      attributeDefinitions: [
+        { AttributeName: 'pk', AttributeType: 'S' },
+        { AttributeName: 'sk', AttributeType: 'S' },
+        { AttributeName: 'gsi1pk', AttributeType: 'S' },
+        { AttributeName: 'gsi1sk', AttributeType: 'S' }
+      ],
+      globalSecondaryIndexes: [
+        {
+          IndexName: 'gsi1',
+          KeySchema: [
+            { AttributeName: 'gsi1pk', KeyType: 'HASH' },
+            { AttributeName: 'gsi1sk', KeyType: 'RANGE' }
+          ],
+          Projection: { ProjectionType: 'ALL' }
+        }
+      ]
+    },
+    {
+      name: `${tablePrefix}-groups`,
+      keySchema: [
+        { AttributeName: 'pk', KeyType: 'HASH' },
+        { AttributeName: 'sk', KeyType: 'RANGE' }
+      ],
+      attributeDefinitions: [
+        { AttributeName: 'pk', AttributeType: 'S' },
+        { AttributeName: 'sk', AttributeType: 'S' }
+      ]
+    },
+    {
+      name: `${tablePrefix}-resources`,
+      keySchema: [
+        { AttributeName: 'pk', KeyType: 'HASH' },
+        { AttributeName: 'sk', KeyType: 'RANGE' }
+      ],
+      attributeDefinitions: [
+        { AttributeName: 'pk', AttributeType: 'S' },
+        { AttributeName: 'sk', AttributeType: 'S' },
+        { AttributeName: 'gsi1pk', AttributeType: 'S' },
+        { AttributeName: 'gsi1sk', AttributeType: 'S' },
+        { AttributeName: 'gsi2pk', AttributeType: 'S' },
+        { AttributeName: 'gsi2sk', AttributeType: 'S' }
+      ],
+      globalSecondaryIndexes: [
+        {
+          IndexName: 'gsi1',
+          KeySchema: [
+            { AttributeName: 'gsi1pk', KeyType: 'HASH' },
+            { AttributeName: 'gsi1sk', KeyType: 'RANGE' }
+          ],
+          Projection: { ProjectionType: 'ALL' }
+        },
+        {
+          IndexName: 'gsi2',
+          KeySchema: [
+            { AttributeName: 'gsi2pk', KeyType: 'HASH' },
+            { AttributeName: 'gsi2sk', KeyType: 'RANGE' }
+          ],
+          Projection: { ProjectionType: 'ALL' }
+        }
+      ]
+    },
+    {
+      name: `${tablePrefix}-sharing`,
+      keySchema: [
+        { AttributeName: 'pk', KeyType: 'HASH' },
+        { AttributeName: 'sk', KeyType: 'RANGE' }
+      ],
+      attributeDefinitions: [
+        { AttributeName: 'pk', AttributeType: 'S' },
+        { AttributeName: 'sk', AttributeType: 'S' },
+        { AttributeName: 'gsi1pk', AttributeType: 'S' },
+        { AttributeName: 'gsi1sk', AttributeType: 'S' },
+        { AttributeName: 'gsi2pk', AttributeType: 'S' },
+        { AttributeName: 'gsi2sk', AttributeType: 'S' }
+      ],
+      globalSecondaryIndexes: [
+        {
+          IndexName: 'gsi1',
+          KeySchema: [
+            { AttributeName: 'gsi1pk', KeyType: 'HASH' },
+            { AttributeName: 'gsi1sk', KeyType: 'RANGE' }
+          ],
+          Projection: { ProjectionType: 'ALL' }
+        },
+        {
+          IndexName: 'gsi2',
+          KeySchema: [
+            { AttributeName: 'gsi2pk', KeyType: 'HASH' },
+            { AttributeName: 'gsi2sk', KeyType: 'RANGE' }
+          ],
+          Projection: { ProjectionType: 'ALL' }
+        }
+      ]
+    }
+  ];
+
+  for (const table of tables) {
+    const exists = await tableExists(table.name);
+    if (!exists) {
+      console.log(`📝 Creating table: ${table.name}`);
+      await createTable(table.name, table.keySchema, table.attributeDefinitions, table.globalSecondaryIndexes);
+    } else {
+      console.log(`✅ Table ${table.name} already exists`);
+    }
+  }
+  
+  console.log('✅ All tables are ready!\n');
+}
 
 /**
  * Setup script to create sample data for testing
@@ -7,6 +185,9 @@ async function setupSampleData() {
   try {
     console.log('Setting up sample data...');
     require('dotenv').config();
+
+    // Ensure all required tables exist before creating sample data
+    await ensureTablesExist();
 
     // Create sample users
     const users = [
@@ -247,5 +428,8 @@ async function cleanupSampleData() {
 
 module.exports = {
   setupSampleData,
-  cleanupSampleData
+  cleanupSampleData,
+  ensureTablesExist,
+  tableExists,
+  createTable
 };
